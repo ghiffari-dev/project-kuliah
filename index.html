@@ -148,11 +148,128 @@
   <main class="pt-16">
     <div class="p-5 md:p-8 lg:p-10">
 
-      <!-- placeholder sections — akan diisi langkah berikutnya -->
-      <section id="home"         class="page hidden"><p class="text-slate-400">Home — segera diisi</p></section>
-      <section id="history"      class="page hidden"><p class="text-slate-400">History — segera diisi</p></section>
-      <section id="report"       class="page hidden"><p class="text-slate-400">Report — segera diisi</p></section>
-      <section id="setting-page" class="page hidden"><p class="text-slate-400">Setting — segera diisi</p></section>
+      <!-- ══ HOME ══ -->
+      <section id="home" class="page hidden">
+
+        <div class="mb-7">
+          <h2 class="text-2xl font-bold">Dashboard</h2>
+          <p class="text-sm mt-0.5" style="color:#64748b;">Ringkasan kondisi keuangan kamu.</p>
+        </div>
+
+        <!-- Langkah 6: Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+          <!-- Saldo -->
+          <div class="card-hover rounded-2xl p-5" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-xs font-medium uppercase tracking-wider" style="color:#64748b;">Total Saldo</p>
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#f8fafc;">
+                <i data-lucide="wallet" class="h-4 w-4" style="color:#f97316;"></i>
+              </div>
+            </div>
+            <h3 id="cardBalance" class="text-2xl font-bold grad-text">Rp 0</h3>
+            <p class="text-xs mt-2" style="color:#475569;">Semua waktu</p>
+          </div>
+
+          <!-- Pemasukan -->
+          <div class="card-hover rounded-2xl p-5" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-xs font-medium uppercase tracking-wider" style="color:#64748b;">Pemasukan</p>
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#dcfce7;">
+                <i data-lucide="trending-up" class="h-4 w-4" style="color:#16a34a;"></i>
+              </div>
+            </div>
+            <h3 id="cardIncome" class="text-2xl font-bold" style="color:#16a34a;">Rp 0</h3>
+            <p id="cardIncomeLabel" class="text-xs mt-2" style="color:#475569;">Bulan ini</p>
+          </div>
+
+          <!-- Pengeluaran -->
+          <div class="card-hover rounded-2xl p-5" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-xs font-medium uppercase tracking-wider" style="color:#64748b;">Pengeluaran</p>
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#ffedd5;">
+                <i data-lucide="trending-down" class="h-4 w-4" style="color:#ea580c;"></i>
+              </div>
+            </div>
+            <h3 id="cardExpense" class="text-2xl font-bold" style="color:#ea580c;">Rp 0</h3>
+            <p id="cardExpenseLabel" class="text-xs mt-2" style="color:#475569;">Bulan ini</p>
+          </div>
+
+        </div>
+
+        <!-- Langkah 7: Budget Warning -->
+        <div id="budgetWarning" class="hidden mb-5 px-5 py-3 rounded-xl text-sm font-medium"
+          style="background:rgba(249,115,22,0.1); border:1px solid rgba(249,115,22,0.3); color:#fb923c;"></div>
+
+        <!-- Langkah 8: Form + Chart -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+          <!-- Form Tambah Transaksi -->
+          <div class="rounded-2xl p-6 lg:col-span-1" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+            <h3 class="text-base font-bold mb-5" style="color:#0f172a;">Tambah Transaksi</h3>
+
+            <form id="transactionForm" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#475569;">Jenis</label>
+                <select id="inputType" class="input-dark w-full rounded-xl px-4 py-3 text-sm">
+                  <option value="expense">Pengeluaran</option>
+                  <option value="income">Pemasukan</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#475569;">Kategori</label>
+                <select id="inputCategory" class="input-dark w-full rounded-xl px-4 py-3 text-sm">
+                  <option value="">Pilih kategori</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#475569;">Nominal</label>
+                <input id="inputAmount" type="text" inputmode="numeric" placeholder="Contoh: 50.000"
+                  class="input-dark w-full rounded-xl px-4 py-3 text-sm" />
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#475569;">Tanggal</label>
+                <input id="inputDate" type="date"
+                  class="input-dark w-full rounded-xl px-4 py-3 text-sm" style="color-scheme:light;" />
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#475569;">Catatan</label>
+                <textarea id="inputNote" rows="2" placeholder="Opsional"
+                  class="input-dark w-full rounded-xl px-4 py-3 text-sm resize-none"></textarea>
+              </div>
+
+              <button type="submit"
+                class="w-full py-3 rounded-xl font-bold text-sm tracking-wide grad-accent transition-opacity hover:opacity-90"
+                style="color:#1f2937;">
+                Simpan Transaksi
+              </button>
+            </form>
+          </div>
+
+          <!-- Grafik Keuangan -->
+          <div class="rounded-2xl p-6 lg:col-span-2" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+            <div class="flex items-center justify-between mb-5">
+              <h3 class="text-base font-bold">Grafik Keuangan</h3>
+              <span class="text-xs px-3 py-1 rounded-full" style="background:#f8fafc; color:#475569;">6 Bulan Terakhir</span>
+            </div>
+            <canvas id="financeChart" height="130"></canvas>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ══ HISTORY ══ — akan diisi langkah berikutnya -->
+      <section id="history"      class="page hidden"></section>
+
+      <!-- ══ REPORT ══ — akan diisi langkah berikutnya -->
+      <section id="report"       class="page hidden"></section>
+
+      <!-- ══ SETTING ══ — akan diisi langkah berikutnya -->
+      <section id="setting-page" class="page hidden"></section>
 
     </div>
   </main>
