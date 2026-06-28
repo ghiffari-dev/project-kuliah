@@ -1,52 +1,161 @@
 <!DOCTYPE html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f97316" />
-    <meta name="description" content="Aplikasi pencatat keuangan offline" />
-    <link rel="manifest" href="manifest.json" />
-    <title>MoneyTrack</title>
-  </head>
-  <body>
 
-    <!-- ======== HEADER ======== -->
-    <header id="app-header">
-      <h1>MoneyTrack</h1>
-    </header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoneyTrack - Pencatat Keuangan Offline</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#f97316" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="MoneyTrack" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="css/output.css">
+  <script src="vendor/tailwind.min.js"></script>
+  <script src="vendor/chart.umd.min.js" defer></script>
+  <script src="vendor/lucide.min.js" defer></script>
+  <script src="db.js" defer></script>
+  <script src="script.js" defer></script>
+  <style>
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #e5e7eb; }
+    ::-webkit-scrollbar-thumb { background: #f97316; border-radius: 10px; }
 
-    <!-- ======== MAIN CONTENT ======== -->
-    <main id="app-main">
+    /* Gradient aksen oranye-kuning */
+    .grad-accent { background: linear-gradient(135deg, #f97316 0%, #eab308 100%); }
+    .grad-text { background: linear-gradient(135deg, #f97316, #eab308); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
-      <!-- Section: Dashboard -->
-      <section id="section-dashboard" class="page-section">
-        <p>Dashboard</p>
-      </section>
+    /* Card hover lift */
+    .card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 34px rgba(15,23,42,0.12); }
 
-      <!-- Section: Daftar Transaksi -->
-      <section id="section-transactions" class="page-section">
-        <p>Transaksi</p>
-      </section>
+    /* Input focus custom */
+    .input-dark { background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; }
+    .input-dark::placeholder { color: #94a3b8; }
+    .input-dark:focus { border-color: #f97316; outline: none; box-shadow: 0 0 0 2px rgba(249,115,22,0.2); }
 
-      <!-- Section: Tambah / Edit Transaksi -->
-      <section id="section-form" class="page-section">
-        <p>Tambah Transaksi</p>
-      </section>
+    /* Select dark */
+    select.input-dark option { background: #ffffff; color: #0f172a; }
 
-      <!-- Section: Laporan -->
-      <section id="section-report" class="page-section">
-        <p>Laporan</p>
-      </section>
+    /* Sidebar active glow */
+    .sidebar-active { background: linear-gradient(135deg, #f97316 0%, #eab308 100%); color: #1f2937 !important; box-shadow: 0 10px 25px rgba(249,115,22,0.26); }
 
-    </main>
+    /* Animasi halus saat ganti halaman */
+    .page { animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-    <!-- ======== BOTTOM NAVIGATION ======== -->
-    <nav id="bottom-nav">
-      <button data-tab="dashboard">Dashboard</button>
-      <button data-tab="transactions">Transaksi</button>
-      <button data-tab="form">Tambah</button>
-      <button data-tab="report">Laporan</button>
+    /* Badge */
+    .badge-income  { background: #dcfce7; color: #166534; }
+    .badge-expense { background: #ffedd5; color: #9a3412; }
+
+    /* Panel terang */
+    .panel-text, .panel-text h3, .panel-text p, .panel-text th { color: #0f172a; }
+    .soft-card { background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.08); }
+    .btn-soft { background:#f8fafc; border:1px solid #e2e8f0; color:#0f172a; }
+    .btn-soft:hover { background:#f1f5f9; }
+    .modal-backdrop-soft { background:rgba(15,23,42,0.45); backdrop-filter:blur(4px); }
+    .mobile-history-card { display:none; }
+    @media (max-width: 767px) {
+      .desktop-history-table { display:none; }
+      .mobile-history-card { display:block; }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen overflow-x-hidden" style="background:#f6f7fb; color:#1f2937;">
+
+  <!-- Toast -->
+  <div id="toast"
+    class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 text-sm px-5 py-3 rounded-xl shadow-2xl
+           opacity-0 translate-y-4 transition-all duration-300 pointer-events-none font-medium"
+    style="background:linear-gradient(135deg,#f97316,#eab308); color:#111;">
+    Tersimpan!
+  </div>
+
+  <!-- Sidebar Overlay -->
+  <div id="sidebarOverlay" class="fixed inset-0 z-40 hidden" style="background:rgba(15,23,42,0.35); backdrop-filter:blur(3px);"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar"
+    class="fixed left-4 top-4 h-[calc(100vh-2rem)] w-72 -translate-x-full z-50 px-5 py-7 transition-transform duration-300 ease-in-out rounded-3xl shadow-2xl"
+    style="background:#ffffff; border:1px solid #e5e7eb;">
+
+    <!-- Logo -->
+    <div class="mb-10 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center grad-accent">
+          <i data-lucide="trending-up" class="h-5 w-5" style="color:#1f2937;"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold tracking-tight" style="color:#0f172a;">CashFlow</h1>
+          <p class="text-xs" style="color:#475569;">Offline Tracker</p>
+        </div>
+      </div>
+      <button id="closeSidebar" type="button"
+        class="rounded-lg p-1.5 transition hover:bg-white/10" style="color:#475569;" aria-label="Tutup">
+        <i data-lucide="x" class="h-4 w-4"></i>
+      </button>
+    </div>
+
+    <nav class="space-y-1">
+      <a href="#home" class="sidebar-link flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200"
+        style="color:#475569;" data-page="home">
+        <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="#history" class="sidebar-link flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200"
+        style="color:#475569;" data-page="history">
+        <i data-lucide="clock" class="h-4 w-4"></i>
+        <span>History</span>
+      </a>
+      <a href="#report" class="sidebar-link flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200"
+        style="color:#475569;" data-page="report">
+        <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
+        <span>Report</span>
+      </a>
     </nav>
 
-  </body>
+    <!-- Bottom info -->
+    <div class="absolute bottom-6 left-4 right-4">
+      <div class="rounded-xl px-4 py-3 text-xs" style="background:#f8fafc; color:#475569; border:1px solid #e2e8f0;">
+        <p class="font-medium mb-0.5" style="color:#475569;">v1.0.0 — Offline</p>
+        <p>Data tersimpan di browser kamu</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Topbar -->
+  <header class="fixed left-0 right-0 top-0 z-30 flex h-16 items-center px-4"
+    style="background:rgba(255,255,255,0.88); border-bottom:1px solid #e5e7eb; backdrop-filter:blur(12px); box-shadow:0 6px 20px rgba(15,23,42,0.04);">
+    <button id="openSidebar" type="button"
+      class="rounded-xl p-2 transition hover:bg-slate-100" style="color:#1f2937;" aria-label="Menu">
+      <i data-lucide="menu" class="h-5 w-5"></i>
+    </button>
+
+    <!-- Title tengah -->
+    <span class="absolute left-1/2 -translate-x-1/2 text-sm font-bold grad-text tracking-wide">CashFlow</span>
+
+    <button id="setting" type="button"
+      class="ml-auto rounded-xl p-2 transition hover:bg-slate-100" style="color:#1f2937;" aria-label="Pengaturan">
+      <i data-lucide="settings" class="h-5 w-5"></i>
+    </button>
+  </header>
+
+  <!-- Main -->
+  <main class="pt-16">
+    <div class="p-5 md:p-8 lg:p-10">
+
+      <!-- placeholder sections — akan diisi langkah berikutnya -->
+      <section id="home"         class="page hidden"><p class="text-slate-400">Home — segera diisi</p></section>
+      <section id="history"      class="page hidden"><p class="text-slate-400">History — segera diisi</p></section>
+      <section id="report"       class="page hidden"><p class="text-slate-400">Report — segera diisi</p></section>
+      <section id="setting-page" class="page hidden"><p class="text-slate-400">Setting — segera diisi</p></section>
+
+    </div>
+  </main>
+
+</body>
 </html>
