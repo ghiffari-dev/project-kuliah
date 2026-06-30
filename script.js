@@ -460,7 +460,287 @@ function setupHistoryFilters() {
     endDateFilter.value = '';
     renderHistory();
   });
+// ── EDIT MODAL ───────────────────────────────
+function openEditModal(id) {
+  getTransactionById(id).then((t) => {
+    if (!t) { alert('Transaksi tidak ditemukan.'); return; }
+    document.getElementById('editId').value = t.id;
+    document.getElementById('editType').value = t.type;
+    renderCategoryOptions(t.type, editCategory, t.category);
+    document.getElementById('editAmount').value = Number(t.amount).toLocaleString('id-ID');
+    document.getElementById('editDate').value = t.date;
+    document.getElementById('editNote').value = t.note || '';
+
+    const modal = document.getElementById('editModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    lucide.createIcons();
+  });
+}
+
+function closeEditModal() {
+  const modal = document.getElementById('editModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+function setupEditModal() {
+  document.getElementById('btnCloseEditModal').addEventListener('click', closeEditModal);
+  document.getElementById('btnCancelEdit').addEventListener('click', closeEditModal);
+  document.getElementById('editModal').addEventListener('click', (e) => {
+    if (e.target.id === 'editModal') closeEditModal();
+  });
+
+  document.getElementById('editTransactionForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = Number(document.getElementById('editId').value);
+    const type = document.getElementById('editType').value;
+    const category = document.getElementById('editCategory').value;
+    const amount = parseRupiahInput(document.getElementById('editAmount').value);
+    const date = document.getElementById('editDate').value;
+    const note = document.getElementById('editNote').value.trim();
+
+    const errors = validateTransactionInput({ type, category, amount, date, note });
+    if (errors.length) { showErrors(errors); return; }
+
+    await updateTransaction(id, { type, category, amount, date, note });
+    closeEditModal();
+    showToast('Transaksi berhasil diperbarui.');
+    renderHistory();
+    renderHome();
+    if (currentPage === 'report') renderReport();
+  });
+}
+
+// ── REPORT ────────────────────────────────────
+function setupReportControls() {
+  const reportMonth = document.getElementById('reportMonth');
+  const reportYear = document.getElementById('reportYear');
+  const reportStartDate = document.getElementById('reportStartDate');
+  const reportEndDate = document.getElementById('reportEndDate');
+
+  const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  reportMonth.innerHTML = monthNames.map((name, i) => `<option value="${i + 1}">${name}</option>`).join('');
+  const currentYear = new Date().getFullYear();
+  let yearOptions = '';
+  for (let y = currentYear - 5; y <= currentYear + 1; y++) {
+    yearOptions += `<option value="${y}">${y}</option>`;
+  }
+  reportYear.innerHTML = yearOptions;
+  reportMonth.value = String(reportFilters.month);
+  reportYear.value = String(reportFilters.year);
+
+  function updateReportFilter() {
+    reportFilters.month = Number(reportMonth.value);
+    reportFilters.year = Number(reportYear.value);
+    reportFilters.startDate = reportStartDate.value;
+    reportFilters.endDate = reportEndDate.value;
+    renderReport();
+  }
+
+  [reportMonth, reportYear, reportStartDate, reportEndDate].forEach((el) => el.addEventListener('change', updateReportFilter));
+}
+
+async function renderReport() {
+  const year = reportFilters.year;
+  const month = reportFilters.month;
+  const allTx = await getAllTransactions();
+  const yearTx = allTx.filter((t) => new Date(t.date).getFullYear() === year);
+  let periodTx = allTx.filter((t) => {
+    const d = new Date(t.date);
+    return d.getFullYear() === year && d.getMonth() + 1 === month;
+  });
+
+  if (reportFilters.startDate || reportFilters.endDate) {
+    periodTx = allTx.filter((t) => {
+      const matchStart = !reportFilters.startDate || t.date >= reportFilters.startDate;
+      const matchEnd = !reportFilters.endDate || t.date <= reportFilters.endDate;
+      return matchStart && matchEnd;
+    });
+  }
+
+  renderYearlyExpenseChart(yearTx, month);
+  renderCategoryDonut(periodTx);
+  renderDailyChart(periodTx);
+  renderCategoryBar(periodTx);
+  renderSavingsTrend(year, month);
+  renderStatCards(periodTx);
+}
+
+function renderYearlyExpenseChart(yearTx, currentMonth) {
+  if (!window.Chart) { fallbackChartMessage('yearlyExpenseChart'); return; }
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+  const sym = currencySymbol();
+  const data = months.map((_, i) =>
+    yearTx.filter((t) => t.type === 'expense' && new Date(t.date).getMonth() === i)
+      .reduce((sum, t) => sum + t.amount, 0)
+  );
+  yearlyExpenseInstance = destroyChart(yearlyExpenseInstance);
+  yearlyExpenseInstance = new Chart(document.getElementById('yearlyExpenseChart'), {
+    type: 'bar',
+    data: { labels: months, datasets: [{ label: 'Pengeluaran', data, backgroundColor: data.map((_, i) => i === currentMonth - 1 ? '#ea580c' : '#fed7aa'), borderRadius: 8, borderSkipped: false }] },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { ticks: { callback: (v) => sym + ' ' + (v / 1000000).toFixed(1) + 'jt', color: '#64748b' }, grid: { color: '#e5e7eb' } },
+        x: { grid: { display: false }, ticks: { color: '#64748b' } },
+      },
+    },
+  });
+}
+
+function renderCategoryDonut(monthTx) {
+  if (!window.Chart) { fallbackChartMessage('categoryDonutChart'); return; }
+  const expenses = monthTx.filter((t) => t.type === 'expense');
+  const catMap = {};
+  expenses.forEach((t) => { catMap[t.category] = (catMap[t.category] || 0) + t.amount; });
+  const labels = Object.keys(catMap);
+  const values = Object.values(catMap);
+  const palette = ['#ea580c','#eab308','#fb923c','#facc15','#fbbf24','#f59e0b','#d97706','#fde68a'];
+  const colors = labels.map((_, i) => palette[i % palette.length]);
+  const total = values.reduce((a, b) => a + b, 0);
+
+  categoryDonutInstance = destroyChart(categoryDonutInstance);
+  categoryDonutInstance = new Chart(document.getElementById('categoryDonutChart'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#ffffff', hoverOffset: 6 }] },
+    options: {
+      responsive: true, cutout: '65%',
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ' ' + formatCurrency(ctx.raw) } } },
+    },
+  });
+
+  const legendContainer = document.getElementById('donutLegend');
+  legendContainer.innerHTML = '';
+  if (labels.length === 0) { legendContainer.innerHTML = '<p class="text-sm text-slate-500 text-center">Belum ada data.</p>'; return; }
+  labels.forEach((label, i) => {
+    const pct = total > 0 ? Math.round((values[i] / total) * 100) : 0;
+    legendContainer.innerHTML += `
+      <div class="flex items-center justify-between text-sm">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full inline-block" style="background:${colors[i]}"></span>
+          <span class="text-slate-600">${safeText(label)}</span>
+        </div>
+        <span class="font-semibold text-slate-700">${pct}%</span>
+      </div>`;
+  });
+}
+
+function renderDailyChart(monthTx) {
+  if (!window.Chart) { fallbackChartMessage('dailyExpenseChart'); return; }
+  const sym = currencySymbol();
+  const dayNames = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  const daySums = Array(7).fill(0), dayCounts = Array(7).fill(0);
+  monthTx.filter((t) => t.type === 'expense').forEach((t) => {
+    const d = new Date(t.date).getDay();
+    daySums[d] += t.amount; dayCounts[d]++;
+  });
+  const avgData = daySums.map((s, i) => dayCounts[i] > 0 ? Math.round(s / dayCounts[i]) : 0);
+  const maxVal = Math.max(...avgData);
+
+  dailyExpenseInstance = destroyChart(dailyExpenseInstance);
+  dailyExpenseInstance = new Chart(document.getElementById('dailyExpenseChart'), {
+    type: 'bar',
+    data: { labels: dayNames, datasets: [{ label: 'Rata-rata Pengeluaran', data: avgData, backgroundColor: avgData.map((v) => v === maxVal && maxVal > 0 ? '#eab308' : '#fef3c7'), borderRadius: 8, borderSkipped: false }] },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ' ' + formatCurrency(ctx.raw) } } },
+      scales: {
+        y: { ticks: { callback: (v) => sym + ' ' + v.toLocaleString('id-ID'), color: '#64748b' }, grid: { color: '#e5e7eb' } },
+        x: { grid: { display: false }, ticks: { color: '#64748b' } },
+      },
+    },
+  });
+}
+
+function renderCategoryBar(monthTx) {
+  if (!window.Chart) { fallbackChartMessage('categoryBarChart'); return; }
+  const sym = currencySymbol();
+  const expenses = monthTx.filter((t) => t.type === 'expense');
+  const catMap = {};
+  expenses.forEach((t) => { catMap[t.category] = (catMap[t.category] || 0) + t.amount; });
+  const sorted = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
+  const labels = sorted.map(([k]) => k);
+  const values = sorted.map(([, v]) => v);
+  const palette = ['#ea580c','#eab308','#fb923c','#facc15','#fbbf24','#f59e0b','#d97706','#fde68a'];
+
+  categoryBarInstance = destroyChart(categoryBarInstance);
+  categoryBarInstance = new Chart(document.getElementById('categoryBarChart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Pengeluaran', data: values, backgroundColor: labels.map((_, i) => palette[i % palette.length]), borderRadius: 6, borderSkipped: false }] },
+    options: {
+      indexAxis: 'y', responsive: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ' ' + formatCurrency(ctx.raw) } } },
+      scales: {
+        x: { ticks: { callback: (v) => sym + ' ' + (v / 1000) + 'rb', color: '#64748b' }, grid: { color: '#e5e7eb' } },
+        y: { grid: { display: false }, ticks: { color: '#64748b' } },
+      },
+    },
+  });
+}
+
+async function renderSavingsTrend(year, month) {
+  if (!window.Chart) { fallbackChartMessage('savingsTrendChart'); return; }
+  const sym = currencySymbol();
+  const labels = [], savings = [];
+  for (let i = 4; i >= 0; i--) {
+    let m = month - i, y = year;
+    if (m <= 0) { m += 12; y -= 1; }
+    const tx = await getTransactionsByMonth(y, m);
+    const s = calcSummary(tx);
+    labels.push(new Date(y, m - 1).toLocaleDateString('id-ID', { month: 'short' }));
+    savings.push(s.income - s.expense);
+  }
+  savingsTrendInstance = destroyChart(savingsTrendInstance);
+  savingsTrendInstance = new Chart(document.getElementById('savingsTrendChart'), {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'Tabungan', data: savings, borderColor: '#ea580c', backgroundColor: 'rgba(234,88,12,0.1)', borderWidth: 3, tension: 0.4, fill: true, pointBackgroundColor: '#ea580c', pointRadius: 5 }] },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ' ' + formatCurrency(ctx.raw) } } },
+      scales: {
+        y: { ticks: { callback: (v) => sym + ' ' + (v / 1000000).toFixed(1) + 'jt', color: '#64748b' }, grid: { color: '#e5e7eb' } },
+        x: { grid: { display: false }, ticks: { color: '#64748b' } },
+      },
+    },
+  });
+}
+
+function renderStatCards(monthTx) {
+  const expenses = monthTx.filter((t) => t.type === 'expense');
+  const total = expenses.reduce((s, t) => s + t.amount, 0);
+  const uniqueDays = new Set(expenses.map((t) => t.date)).size;
+  const dailyAvg = uniqueDays > 0 ? Math.round(total / uniqueDays) : 0;
+
+  const catMap = {};
+  expenses.forEach((t) => { catMap[t.category] = (catMap[t.category] || 0) + t.amount; });
+  const topCat = Object.entries(catMap).sort((a, b) => b[1] - a[1])[0];
+
+  const dayNames = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const daySums = Array(7).fill(0);
+  expenses.forEach((t) => { daySums[new Date(t.date).getDay()] += t.amount; });
+  const topDayIdx = daySums.indexOf(Math.max(...daySums));
+
+  document.getElementById('statDailyAvg').textContent = formatCurrency(dailyAvg);
+  document.getElementById('statTopCategory').textContent = topCat ? topCat[0] : '-';
+  document.getElementById('statTopDay').textContent = expenses.length > 0 ? dayNames[topDayIdx] : '-';
+  document.getElementById('statTxCount').textContent = monthTx.length + 'x';
+}
+
+// ── TOAST ─────────────────────────────────────
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.classList.remove('opacity-0', 'translate-y-4');
+  toast.classList.add('opacity-100', 'translate-y-0');
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'translate-y-4');
+    toast.classList.remove('opacity-100', 'translate-y-0');
+  }, 2500);
 }
 
 // ── INIT (sementara, akan dilengkapi di langkah selanjutnya) ──
 setupHistoryFilters();
+setupEditModal();
+setupReportControls();

@@ -276,7 +276,7 @@
 
             <div>
               <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#475569;">Jenis</label>
-              <select id="filterType" class="input-dark w-full rounded-xl px-3 py-2.5 text-sm">
+              <select id="typeFilter" class="input-dark w-full rounded-xl px-3 py-2.5 text-sm">
                 <option value="all">Semua</option>
                 <option value="income">Pemasukan</option>
                 <option value="expense">Pengeluaran</option>
@@ -285,23 +285,23 @@
 
             <div>
               <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#475569;">Kategori</label>
-              <select id="filterCategory" class="input-dark w-full rounded-xl px-3 py-2.5 text-sm">
+              <select id="categoryFilter" class="input-dark w-full rounded-xl px-3 py-2.5 text-sm">
                 <option value="all">Semua</option>
               </select>
             </div>
 
             <div>
               <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#475569;">Dari Tanggal</label>
-              <input id="filterDateFrom" type="date" class="input-dark w-full rounded-xl px-3 py-2.5 text-sm" style="color-scheme:light;" />
+              <input id="startDateFilter" type="date" class="input-dark w-full rounded-xl px-3 py-2.5 text-sm" style="color-scheme:light;" />
             </div>
 
             <div>
               <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#475569;">Sampai Tanggal</label>
-              <input id="filterDateTo" type="date" class="input-dark w-full rounded-xl px-3 py-2.5 text-sm" style="color-scheme:light;" />
+              <input id="endDateFilter" type="date" class="input-dark w-full rounded-xl px-3 py-2.5 text-sm" style="color-scheme:light;" />
             </div>
 
             <div class="flex items-end">
-              <button id="resetFilter" type="button"
+              <button id="btnResetFilter" type="button"
                 class="btn-soft w-full rounded-xl px-3 py-2.5 text-sm font-semibold transition">
                 Reset Filter
               </button>
