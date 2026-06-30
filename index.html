@@ -437,8 +437,197 @@
 
       </section>
 
-      <!-- ══ SETTING ══ — akan diisi langkah berikutnya -->
-      <section id="setting-page" class="page hidden"></section>
+      <!-- ══ SETTING ══ -->
+      <section id="setting-page" class="page hidden">
+        <div class="mb-7">
+          <h2 class="text-2xl font-bold">Pengaturan</h2>
+          <p class="text-sm mt-0.5" style="color:#64748b;">Kelola preferensi aplikasi kamu.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+          <!-- Kolom Kiri -->
+          <div class="lg:col-span-2 space-y-5">
+
+            <!-- Langkah 18: Profil -->
+            <div class="rounded-2xl p-6" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+              <div class="flex items-center gap-3 mb-5">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center grad-accent">
+                  <i data-lucide="user" class="h-4 w-4" style="color:#1f2937;"></i>
+                </div>
+                <h3 class="text-base font-bold">Profil</h3>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#475569;">Nama</label>
+                  <input id="settingName" type="text" placeholder="Masukkan nama kamu"
+                    class="input-dark w-full rounded-xl px-4 py-3 text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wider" style="color:#475569;">Email</label>
+                  <input id="settingEmail" type="email" placeholder="contoh@email.com"
+                    class="input-dark w-full rounded-xl px-4 py-3 text-sm" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Langkah 19: Budget Bulanan -->
+            <div class="rounded-2xl p-6" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+              <div class="flex items-center gap-3 mb-5">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(74,222,128,0.15);">
+                  <i data-lucide="wallet" class="h-4 w-4" style="color:#16a34a;"></i>
+                </div>
+                <h3 class="text-base font-bold">Budget Bulanan</h3>
+              </div>
+              <p class="text-xs mb-4" style="color:#64748b;">Atur batas pengeluaran bulanan. Notifikasi muncul saat mendekati atau melebihi budget.</p>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold" style="color:#f97316;">Rp</span>
+                <input id="settingBudget" type="text" inputmode="numeric" placeholder="0"
+                  class="input-dark w-full rounded-xl pl-10 pr-4 py-3 text-sm" />
+              </div>
+              <div id="budgetStatus" class="mt-4 hidden">
+                <div class="flex justify-between text-xs mb-2">
+                  <span style="color:#64748b;">Pengeluaran bulan ini</span>
+                  <span id="budgetUsedLabel" class="font-bold" style="color:#0f172a;">Rp 0</span>
+                </div>
+                <div class="w-full rounded-full h-2" style="background:#e5e7eb;">
+                  <div id="budgetBar" class="h-2 rounded-full transition-all duration-500" style="width:0%; background:linear-gradient(90deg,#f97316,#eab308);"></div>
+                </div>
+                <p id="budgetNote" class="text-xs mt-2" style="color:#475569;"></p>
+              </div>
+            </div>
+
+            <!-- Langkah 20: Preferensi -->
+            <div class="rounded-2xl p-6" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+              <div class="flex items-center gap-3 mb-5">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(139,92,246,0.15);">
+                  <i data-lucide="sliders-horizontal" class="h-4 w-4" style="color:#a78bfa;"></i>
+                </div>
+                <h3 class="text-base font-bold">Preferensi</h3>
+              </div>
+
+              <div class="flex items-center justify-between py-3">
+                <div>
+                  <p class="text-sm font-medium" style="color:#0f172a;">Notifikasi Budget</p>
+                  <p class="text-xs mt-0.5" style="color:#475569;">Peringatkan saat budget hampir habis</p>
+                </div>
+                <button id="toggleNotif" type="button"
+                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none grad-accent"
+                  aria-checked="true">
+                  <span id="toggleNotifDot"
+                    class="inline-block h-4 w-4 translate-x-6 transform rounded-full transition-transform" style="background:#ffffff;"></span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Langkah 21: Kategori Custom -->
+            <div class="rounded-2xl p-6" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+              <div class="flex items-center gap-3 mb-5">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#ffedd5;">
+                  <i data-lucide="tags" class="h-4 w-4" style="color:#ea580c;"></i>
+                </div>
+                <h3 class="text-base font-bold">Kategori Custom</h3>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                <select id="newCategoryType" class="input-dark rounded-xl px-4 py-3 text-sm">
+                  <option value="expense">Pengeluaran</option>
+                  <option value="income">Pemasukan</option>
+                </select>
+                <input id="newCategoryName" type="text" placeholder="Nama kategori" class="input-dark rounded-xl px-4 py-3 text-sm md:col-span-1" />
+                <button id="btnAddCategory" type="button" class="rounded-xl px-4 py-3 text-sm font-bold grad-accent" style="color:#1f2937;">Tambah Kategori</button>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p class="text-xs uppercase font-bold mb-2" style="color:#475569;">Pemasukan</p>
+                  <div id="incomeCategoryList" class="space-y-2"></div>
+                </div>
+                <div>
+                  <p class="text-xs uppercase font-bold mb-2" style="color:#475569;">Pengeluaran</p>
+                  <div id="expenseCategoryList" class="space-y-2"></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Kolom Kanan -->
+          <div class="space-y-5">
+
+            <!-- Langkah 22: Tentang -->
+            <div class="rounded-2xl p-6" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+              <div class="flex items-center gap-3 mb-5">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#f8fafc;">
+                  <i data-lucide="info" class="h-4 w-4" style="color:#475569;"></i>
+                </div>
+                <h3 class="text-base font-bold">Tentang</h3>
+              </div>
+              <div class="space-y-3 text-sm">
+                <div class="flex justify-between py-2" style="border-bottom:1px solid #1a1a1a;">
+                  <span style="color:#475569;">Aplikasi</span>
+                  <span class="font-semibold grad-text">MoneyTrack</span>
+                </div>
+                <div class="flex justify-between py-2" style="border-bottom:1px solid #1a1a1a;">
+                  <span style="color:#475569;">Versi</span>
+                  <span class="font-semibold" style="color:#0f172a;">1.0.0</span>
+                </div>
+                <div class="flex justify-between py-2" style="border-bottom:1px solid #1a1a1a;">
+                  <span style="color:#475569;">Penyimpanan</span>
+                  <span class="font-semibold" style="color:#0f172a;">IndexedDB</span>
+                </div>
+                <div class="flex justify-between py-2">
+                  <span style="color:#475569;">Total Transaksi</span>
+                  <span id="settingTotalTx" class="font-semibold grad-text">-</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Langkah 22: Kelola Data -->
+            <div class="rounded-2xl p-6" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+              <div class="flex items-center gap-3 mb-5">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(249,115,22,0.15);">
+                  <i data-lucide="database" class="h-4 w-4" style="color:#f97316;"></i>
+                </div>
+                <h3 class="text-base font-bold">Kelola Data</h3>
+              </div>
+              <div class="space-y-3">
+                <button id="btnExportCSV" type="button"
+                  class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+                  style="background:#f8fafc; border:1px solid #e2e8f0; color:#16a34a;">
+                  <i data-lucide="download" class="h-4 w-4"></i>
+                  Export Data CSV
+                </button>
+                <button id="btnBackupJSON" type="button"
+                  class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+                  style="background:#f8fafc; border:1px solid #e2e8f0; color:#2563eb;">
+                  <i data-lucide="archive" class="h-4 w-4"></i>
+                  Backup JSON
+                </button>
+                <label for="inputRestoreJSON"
+                  class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80 cursor-pointer"
+                  style="background:#f8fafc; border:1px solid #e2e8f0; color:#7c3aed;">
+                  <i data-lucide="upload" class="h-4 w-4"></i>
+                  Restore JSON
+                </label>
+                <input id="inputRestoreJSON" type="file" accept="application/json,.json" class="hidden" />
+                <button id="btnResetData" type="button"
+                  class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80"
+                  style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); color:#f87171;">
+                  <i data-lucide="trash-2" class="h-4 w-4"></i>
+                  Hapus Semua Data
+                </button>
+              </div>
+            </div>
+
+            <!-- Simpan -->
+            <button id="btnSaveSetting" type="button"
+              class="w-full py-3 rounded-xl font-bold text-sm tracking-wide grad-accent transition-opacity hover:opacity-90"
+              style="color:#1f2937;">
+              Simpan Pengaturan
+            </button>
+
+          </div>
+        </div>
+      </section>
 
     </div>
   </main>
