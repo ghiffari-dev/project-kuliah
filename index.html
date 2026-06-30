@@ -403,6 +403,38 @@
           </div>
         </div>
 
+        <!-- Langkah 16: Stat Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+          <div class="rounded-2xl p-4 text-center card-hover" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+            <p class="text-xs uppercase tracking-wider mb-2" style="color:#64748b;">Harian Rata-rata</p>
+            <p id="statDailyAvg" class="text-lg font-bold" style="color:#ea580c;">-</p>
+          </div>
+          <div class="rounded-2xl p-4 text-center card-hover" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+            <p class="text-xs uppercase tracking-wider mb-2" style="color:#64748b;">Kategori Terboros</p>
+            <p id="statTopCategory" class="text-lg font-bold" style="color:#facc15;">-</p>
+          </div>
+          <div class="rounded-2xl p-4 text-center card-hover" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+            <p class="text-xs uppercase tracking-wider mb-2" style="color:#64748b;">Hari Terboros</p>
+            <p id="statTopDay" class="text-lg font-bold" style="color:#60a5fa;">-</p>
+          </div>
+          <div class="rounded-2xl p-4 text-center card-hover" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+            <p class="text-xs uppercase tracking-wider mb-2" style="color:#64748b;">Total Transaksi</p>
+            <p id="statTxCount" class="text-lg font-bold" style="color:#0f172a;">-</p>
+          </div>
+        </div>
+
+        <!-- Langkah 17: Tren Tabungan -->
+        <div class="rounded-2xl p-6" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h3 class="text-base font-bold">Tren Tabungan</h3>
+              <p class="text-xs mt-0.5" style="color:#64748b;">Selisih pemasukan & pengeluaran per bulan</p>
+            </div>
+            <span class="text-xs px-3 py-1 rounded-full font-medium badge-income">2026</span>
+          </div>
+          <canvas id="savingsTrendChart" height="80"></canvas>
+        </div>
+
       </section>
 
       <!-- ══ SETTING ══ — akan diisi langkah berikutnya -->
