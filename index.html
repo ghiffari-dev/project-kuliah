@@ -340,8 +340,70 @@
 
       </section>
 
-      <!-- ══ REPORT ══ — akan diisi langkah berikutnya -->
-      <section id="report"       class="page hidden"></section>
+      <!-- ══ REPORT ══ -->
+      <section id="report" class="page hidden">
+
+        <!-- Langkah 13: Header + Filter -->
+        <div class="mb-7 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-bold">Laporan Keuangan</h2>
+            <p class="text-sm mt-0.5" style="color:#64748b;">Analisis lengkap pengeluaran & pemasukan kamu.</p>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <select id="reportMonth" class="input-dark rounded-xl px-4 py-2.5 text-sm"></select>
+            <select id="reportYear" class="input-dark rounded-xl px-4 py-2.5 text-sm"></select>
+            <input id="reportStartDate" type="date" class="input-dark rounded-xl px-4 py-2.5 text-sm" style="color-scheme:light;" />
+            <input id="reportEndDate" type="date" class="input-dark rounded-xl px-4 py-2.5 text-sm" style="color-scheme:light;" />
+          </div>
+        </div>
+
+        <!-- Langkah 14: Pengeluaran per Bulan + Donut Terboros -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+          <div class="rounded-2xl p-6 lg:col-span-2" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+            <div class="flex items-center justify-between mb-5">
+              <div>
+                <h3 class="text-base font-bold">Pengeluaran per Bulan</h3>
+                <p class="text-xs mt-0.5" style="color:#64748b;">Tahun 2026</p>
+              </div>
+              <span class="text-xs px-3 py-1 rounded-full font-medium badge-expense">Pengeluaran</span>
+            </div>
+            <canvas id="yearlyExpenseChart" height="130"></canvas>
+          </div>
+
+          <div class="rounded-2xl p-6" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+            <h3 class="text-base font-bold mb-1">Terboros</h3>
+            <p class="text-xs mb-5" style="color:#64748b;">Pengeluaran per kategori</p>
+            <canvas id="categoryDonutChart" height="180"></canvas>
+            <div class="mt-4 space-y-2" id="donutLegend"></div>
+          </div>
+        </div>
+
+        <!-- Langkah 15: Chart Harian + Chart Kategori -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+          <div class="rounded-2xl p-6" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+            <div class="flex items-center justify-between mb-5">
+              <div>
+                <h3 class="text-base font-bold">Pengeluaran per Hari</h3>
+                <p class="text-xs mt-0.5" style="color:#64748b;">Rata-rata seminggu</p>
+              </div>
+              <span class="text-xs px-3 py-1 rounded-full font-medium" style="background:rgba(234,179,8,0.15); color:#facc15;">Mingguan</span>
+            </div>
+            <canvas id="dailyExpenseChart" height="180"></canvas>
+          </div>
+
+          <div class="rounded-2xl p-6" style="background:#ffffff; border:1px solid #e5e7eb; box-shadow:0 14px 34px rgba(15,23,42,0.10);">
+            <div class="flex items-center justify-between mb-5">
+              <div>
+                <h3 class="text-base font-bold">Detail per Kategori</h3>
+                <p class="text-xs mt-0.5" style="color:#64748b;">Total pengeluaran bulan ini</p>
+              </div>
+              <span class="text-xs px-3 py-1 rounded-full font-medium" style="background:rgba(139,92,246,0.15); color:#a78bfa;">Bulan Ini</span>
+            </div>
+            <canvas id="categoryBarChart" height="180"></canvas>
+          </div>
+        </div>
+
+      </section>
 
       <!-- ══ SETTING ══ — akan diisi langkah berikutnya -->
       <section id="setting-page" class="page hidden"></section>
