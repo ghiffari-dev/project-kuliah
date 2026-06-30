@@ -460,6 +460,8 @@ function setupHistoryFilters() {
     endDateFilter.value = '';
     renderHistory();
   });
+}
+
 // ── EDIT MODAL ───────────────────────────────
 function openEditModal(id) {
   getTransactionById(id).then((t) => {
@@ -740,7 +742,268 @@ function showToast(message) {
   }, 2500);
 }
 
-// ── INIT (sementara, akan dilengkapi di langkah selanjutnya) ──
-setupHistoryFilters();
-setupEditModal();
-setupReportControls();
+// ── SETTING ───────────────────────────────────
+let settingState = { notifBudget: true };
+
+function applyToggleUI(btnId, dotId, isOn) {
+  const btn = document.getElementById(btnId);
+  const dot = document.getElementById(dotId);
+  if (!btn || !dot) return;
+  if (isOn) {
+    btn.style.background = 'linear-gradient(135deg,#f97316,#eab308)';
+    dot.classList.remove('translate-x-1');
+    dot.classList.add('translate-x-6');
+  } else {
+    btn.style.background = '#cbd5e1';
+    dot.classList.remove('translate-x-6');
+    dot.classList.add('translate-x-1');
+  }
+}
+
+function saveSettings() {
+  const name = document.getElementById('settingName').value.trim();
+  const email = document.getElementById('settingEmail').value.trim();
+  const budgetRaw = document.getElementById('settingBudget').value.replace(/\./g, '').replace(/,/g, '');
+  const data = {
+    name, email,
+    budget: Number(budgetRaw) || 0,
+    notifBudget: settingState.notifBudget,
+  };
+
+  saveSettingsData(data);
+  showToast('Pengaturan disimpan.');
+  showPage('home');
+}
+
+function renderCategoryManagement() {
+  const categories = getCategories();
+  const incomeList = document.getElementById('incomeCategoryList');
+  const expenseList = document.getElementById('expenseCategoryList');
+  if (!incomeList || !expenseList) return;
+
+  function itemHtml(type, cat) {
+    const isDefault = DEFAULT_CATEGORIES[type].includes(cat);
+    return `
+      <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2 bg-slate-50">
+        <span class="text-sm font-medium text-slate-700">${safeText(cat)}</span>
+        <button type="button" ${isDefault ? 'disabled' : ''} onclick="deleteCategory('${type}', '${encodeURIComponent(cat)}')"
+          class="text-xs font-bold ${isDefault ? 'text-slate-300 cursor-not-allowed' : 'text-red-500 hover:text-red-700'}">
+          ${isDefault ? 'Default' : 'Hapus'}
+        </button>
+      </div>`;
+  }
+
+  incomeList.innerHTML = categories.income.map((cat) => itemHtml('income', cat)).join('');
+  expenseList.innerHTML = categories.expense.map((cat) => itemHtml('expense', cat)).join('');
+}
+
+function deleteCategory(type, category) {
+  category = decodeURIComponent(category);
+  const categories = getCategories();
+  if (DEFAULT_CATEGORIES[type].includes(category)) return;
+  categories[type] = categories[type].filter((cat) => cat !== category);
+  saveCategories(categories);
+  renderCategoryOptions(inputType.value);
+  renderHistoryCategoryFilter(historyFilters.category);
+  renderCategoryManagement();
+  showToast('Kategori dihapus.');
+}
+
+async function renderSetting() {
+  const saved = getSettings();
+
+  document.getElementById('settingName').value = saved.name || '';
+  document.getElementById('settingEmail').value = saved.email || '';
+  document.getElementById('settingBudget').value = saved.budget ? Number(saved.budget).toLocaleString('id-ID') : '';
+
+  settingState.notifBudget = saved.notifBudget !== false;
+  applyToggleUI('toggleNotif', 'toggleNotifDot', settingState.notifBudget);
+
+  const all = await getAllTransactions();
+  document.getElementById('settingTotalTx').textContent = all.length + ' transaksi';
+
+  const budgetStatus = document.getElementById('budgetStatus');
+  if (saved.budget && saved.budget > 0) {
+    const now = new Date();
+    const monthTx = await getTransactionsByMonth(now.getFullYear(), now.getMonth() + 1);
+    const { expense } = calcSummary(monthTx);
+    const pct = Math.min(Math.round((expense / saved.budget) * 100), 100);
+    const barColor = pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-orange-400' : 'bg-green-500';
+
+    budgetStatus.classList.remove('hidden');
+    document.getElementById('budgetUsedLabel').textContent = formatCurrency(expense) + ' / ' + formatCurrency(saved.budget);
+    const bar = document.getElementById('budgetBar');
+    bar.style.width = pct + '%';
+    bar.className = 'h-2 rounded-full transition-all duration-500 ' + barColor;
+    document.getElementById('budgetNote').textContent =
+      pct >= 100 ? 'Budget bulan ini sudah terlampaui.' :
+      pct >= 80 ? 'Budget hampir habis (' + pct + '% terpakai).' :
+      pct + '% dari budget bulan ini terpakai.';
+  } else {
+    budgetStatus.classList.add('hidden');
+  }
+
+  document.getElementById('settingBudget').oninput = function () {
+    const raw = this.value.replace(/\D/g, '');
+    this.value = raw ? Number(raw).toLocaleString('id-ID') : '';
+  };
+
+  renderCategoryManagement();
+  lucide.createIcons();
+}
+
+function setupSettingListeners() {
+  document.getElementById('toggleNotif').addEventListener('click', function () {
+    settingState.notifBudget = !settingState.notifBudget;
+    applyToggleUI('toggleNotif', 'toggleNotifDot', settingState.notifBudget);
+  });
+
+  document.getElementById('btnSaveSetting').addEventListener('click', saveSettings);
+
+  document.getElementById('btnAddCategory').addEventListener('click', () => {
+    const type = document.getElementById('newCategoryType').value;
+    const nameInput = document.getElementById('newCategoryName');
+    const name = nameInput.value.trim();
+    if (!name || name.length < 2) { alert('Nama kategori minimal 2 karakter.'); return; }
+    if (name.length > 30) { alert('Nama kategori maksimal 30 karakter.'); return; }
+
+    const categories = getCategories();
+    const exists = categories[type].some((cat) => cat.toLowerCase() === name.toLowerCase());
+    if (exists) { alert('Kategori sudah ada.'); return; }
+
+    categories[type].push(name);
+    saveCategories(categories);
+    nameInput.value = '';
+    renderCategoryOptions(inputType.value);
+    renderHistoryCategoryFilter(historyFilters.category);
+    renderCategoryManagement();
+    showToast('Kategori berhasil ditambahkan.');
+  });
+
+  document.getElementById('btnExportCSV').addEventListener('click', async () => {
+    const all = await getAllTransactions();
+    if (all.length === 0) { showToast('Belum ada data untuk diekspor.'); return; }
+
+    const header = ['Tanggal','Kategori','Jenis','Nominal','Catatan'];
+    const rows = all.map((t) => [
+      t.date, t.category,
+      t.type === 'income' ? 'Pemasukan' : 'Pengeluaran',
+      t.amount, t.note || '',
+    ]);
+    const csv = [header, ...rows].map((r) => r.map((v) => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+    downloadTextFile('moneytrack_' + new Date().toISOString().slice(0, 10) + '.csv', '\uFEFF' + csv, 'text/csv;charset=utf-8;');
+    showToast('Data berhasil diekspor.');
+  });
+
+  document.getElementById('btnBackupJSON').addEventListener('click', async () => {
+    const all = await getAllTransactions();
+    const payload = {
+      app: 'MoneyTrack',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      settings: getSettings(),
+      categories: getCategories(),
+      transactions: all,
+    };
+    downloadTextFile('moneytrack_backup_' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(payload, null, 2), 'application/json;charset=utf-8;');
+    showToast('Backup JSON berhasil dibuat.');
+  });
+
+  document.getElementById('inputRestoreJSON').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text);
+      if (!payload || !Array.isArray(payload.transactions)) throw new Error('Format file tidak valid.');
+
+      const invalid = payload.transactions.find((t) => {
+        return !['income','expense'].includes(t.type) || !t.category || !t.date || !Number(t.amount);
+      });
+      if (invalid) throw new Error('Ada data transaksi yang tidak valid.');
+
+      if (!confirm('Restore akan mengganti semua transaksi saat ini. Lanjutkan?')) return;
+
+      await replaceAllTransactions(payload.transactions);
+      if (payload.settings && typeof payload.settings === 'object') saveSettingsData(payload.settings);
+      if (payload.categories && Array.isArray(payload.categories.expense) && Array.isArray(payload.categories.income)) saveCategories(payload.categories);
+
+      showToast('Restore JSON berhasil.');
+      renderCategoryOptions(inputType.value);
+      renderHistoryCategoryFilter('all');
+      showPage('home');
+    } catch (err) {
+      alert('Restore gagal: ' + err.message);
+    } finally {
+      e.target.value = '';
+    }
+  });
+
+  document.getElementById('btnResetData').addEventListener('click', async () => {
+    if (!confirm('Yakin ingin menghapus SEMUA data transaksi? Aksi ini tidak bisa dibatalkan.')) return;
+    await clearTransactions();
+    showToast('Semua data berhasil dihapus.');
+    renderSetting();
+    renderHistory();
+    renderHome();
+  });
+}
+
+// ── FORMAT NOMINAL FORM ───────────────────────
+function setupFormattedNumberInput(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  el.addEventListener('input', function () {
+    const raw = this.value.replace(/\D/g, '');
+    if (!raw) { this.value = ''; return; }
+    const pos = this.selectionStart;
+    const prevLen = this.value.length;
+    this.value = Number(raw).toLocaleString('id-ID');
+    const diff = this.value.length - prevLen;
+    try { this.setSelectionRange(pos + diff, pos + diff); } catch(e) {}
+  });
+
+  el.addEventListener('keydown', function (e) {
+    const ctrl = e.ctrlKey || e.metaKey;
+    if (ctrl) return;
+    const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'];
+    if (!allowed.includes(e.key) && !/^\d$/.test(e.key)) e.preventDefault();
+  });
+}
+
+function setupPWA() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js').catch(() => {
+        console.warn('Service worker gagal didaftarkan.');
+      });
+    });
+  }
+}
+
+// ── INIT ──────────────────────────────────────
+async function init() {
+  await initDB();
+  await seedDummyData();
+  renderCategoryOptions(inputType.value);
+  renderHistoryCategoryFilter();
+  setupFormattedNumberInput('inputAmount');
+  setupFormattedNumberInput('editAmount');
+  setupHistoryFilters();
+  setupReportControls();
+  setupEditModal();
+  setupSettingListeners();
+  setupPWA();
+  // Init icons after all DOM content is ready
+  if (window.lucide && typeof lucide.createIcons === 'function') {
+    lucide.createIcons();
+  }
+  showPage('home');
+}
+
+init().catch((error) => {
+  console.error(error);
+  alert('Aplikasi gagal dimuat: ' + error.message);
+});
